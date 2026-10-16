@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CineMatch AI - Movie Recommendation System</title>
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#050a07; --surface:#0c1610; --surface2:#122019; --line:#1f3a2b;
+  --green:#22c55e; --green-d:#15803d; --text:#ffffff; --muted:#9db3a5;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root:not([data-theme="light"]), :root[data-theme="dark"]{ color-scheme: dark; }
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:radial-gradient(1200px 500px at 50% -10%,#0f3a22 0%,var(--bg) 60%) no-repeat,var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5;min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
+.logo{font-weight:800;font-size:22px;letter-spacing:.5px}.logo span{color:var(--green)}
+nav a{color:var(--muted);text-decoration:none;margin-left:20px;font-size:14px}nav a:hover{color:var(--green)}
+.hero{text-align:center;padding:56px 0 28px}
+.hero h1{font-size:clamp(30px,6vw,52px);line-height:1.1;font-weight:800}
+.hero h1 em{font-style:normal;color:var(--green)}
+.hero p{color:var(--muted);max-width:560px;margin:14px auto 26px}
+.search{display:flex;gap:10px;max-width:560px;margin:0 auto}
+input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);color:var(--text);padding:14px 16px;border-radius:12px;font-size:16px;outline:none}
+input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+button{background:var(--green);color:#03140a;border:0;padding:14px 22px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer}
+button:hover{background:#4ade80}
+#go{background:linear-gradient(135deg,#4ade80,#22c55e 55%,#16a34a);color:#00130a;font-weight:800;font-size:16px;padding:14px 28px;letter-spacing:.3px;box-shadow:0 0 0 1px rgba(74,222,128,.6),0 6px 22px rgba(34,197,94,.55),0 0 36px rgba(34,197,94,.35);transition:transform .15s,box-shadow .2s;animation:glow 2.4s ease-in-out infinite}
+#go:hover{background:linear-gradient(135deg,#86efac,#4ade80 55%,#22c55e);transform:translateY(-2px) scale(1.04);box-shadow:0 0 0 1px #86efac,0 10px 30px rgba(74,222,128,.75),0 0 50px rgba(74,222,128,.5)}
+#go:active{transform:scale(.97)}
+@keyframes glow{50%{box-shadow:0 0 0 1px rgba(74,222,128,.8),0 8px 28px rgba(34,197,94,.75),0 0 52px rgba(34,197,94,.55)}}
+@media(prefers-reduced-motion:reduce){#go{animation:none}}
+.msg{color:var(--muted);font-size:14px;min-height:22px;margin-top:10px}
+h2{font-size:22px;margin:38px 0 14px}h2 span{color:var(--green)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{background:var(--surface);border:1px solid var(--line);color:var(--text);padding:8px 16px;border-radius:999px;font-size:14px;font-weight:500}
+.chip:hover{border-color:var(--green)}
+.chip.on{background:var(--green);color:#03140a;border-color:var(--green);font-weight:700}
+.results{display:grid;gap:14px}
+.res{display:flex;gap:16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.res .rank{font-size:26px;font-weight:800;color:var(--green);width:34px;text-align:center}
+.res .info{flex:1;min-width:0}.res b{font-size:17px}
+.tags{color:var(--muted);font-size:13px}
+.meter{height:8px;background:var(--surface2);border-radius:8px;margin-top:8px;overflow:hidden}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--green-d),var(--green));border-radius:8px;transition:width .6s}
+.pct{font-weight:800;font-size:18px;min-width:62px;text-align:right}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-4px);border-color:var(--green)}
+.poster{height:120px;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;color:#fff}
+.card div.t{padding:10px 12px}.card b{font-size:14px;display:block}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.step .n{color:var(--green);font-weight:800;font-size:13px;letter-spacing:1px}
+.step p{color:var(--muted);font-size:14px;margin-top:6px}
+code{background:var(--surface2);padding:2px 6px;border-radius:6px;color:var(--green);font-size:13px}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:40px 0 30px;border-top:1px solid var(--line);margin-top:44px}
+@media(max-width:520px){.search{flex-direction:column}nav a{display:none}.res{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav><div class="logo">Cine<span>Match</span> AI</div>
+    <div><a href="#find">Find</a><a href="#genres">By Genre</a><a href="#all">All Movies</a></div></nav>
+
+  <section class="hero" id="find">
+    <h1>Find your next <em>favourite</em> movie</h1>
+    <p>A content-based recommendation engine powered by cosine similarity. Type a movie you love and let the AI do the rest.</p>
+    <div class="search">
+      <input id="q" list="titles" placeholder="e.g. Inception" autocomplete="off">
+      <datalist id="titles"></datalist>
+      <button id="go">Recommend</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <div id="out1"></div>
+
+  <h2 id="genres">Pick by <span>favourite genres</span></h2>
+  <div class="chips" id="chips"></div>
+  <div class="results" id="out2" style="margin-top:16px"></div>
+
+  <h2 id="all">All <span>movies</span> <small style="color:var(--muted);font-size:14px;font-weight:400">(tap one to get recommendations)</small></h2>
+  <div class="grid" id="grid"></div>
+
+  <footer><b style="color:var(--text)">Cine<span style="color:var(--green)">Match</span> AI</b><br>&copy; 2026 CineMatch AI. All rights reserved.</footer>
+</div>
+
+<script>
+const G=["Action","SciFi","Romance","Horror","Comedy","Thriller","Drama"];
+const M={
+"Avengers":[1,1,0,0,0,0,0],"Iron Man":[1,1,0,0,0,0,0],"Inception":[1,1,0,0,0,1,0],
+"Interstellar":[0,1,0,0,0,0,1],"The Matrix":[1,1,0,0,0,1,0],"Titanic":[0,0,1,0,0,0,1],
+"The Notebook":[0,0,1,0,0,0,1],"La La Land":[0,0,1,0,1,0,1],"The Conjuring":[0,0,0,1,0,1,0],
+"Annabelle":[0,0,0,1,0,0,0],"Get Out":[0,0,0,1,0,1,0],"Hangover":[0,0,0,0,1,0,0],
+"Superbad":[0,0,0,0,1,0,0],"Shutter Island":[0,0,0,0,0,1,1],"John Wick":[1,0,0,0,0,1,0]};
+const names=Object.keys(M), $=id=>document.getElementById(id);
+
+function cos(a,b){let d=0,x=0,y=0;for(let i=0;i<a.length;i++){d+=a[i]*b[i];x+=a[i]*a[i];y+=b[i]*b[i]}return x&&y?d/Math.sqrt(x*y):0}
+function tags(n){return G.filter((g,i)=>M[n][i]).join(" · ")}
+function lev(a,b){const m=[];for(let i=0;i<=a.length;i++){m[i]=[i]}for(let j=0;j<=b.length;j++)m[0][j]=j;
+  for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return m[a.length][b.length]}
+function find(t){t=t.trim().toLowerCase();if(!t)return null;
+  const ex=names.find(n=>n.toLowerCase()==t);if(ex)return ex;
+  const sub=names.find(n=>n.toLowerCase().includes(t));if(sub)return sub;
+  let best=null,bd=99;names.forEach(n=>{const d=lev(t,n.toLowerCase());if(d<bd){bd=d;best=n}});
+  return bd<=Math.max(2,Math.floor(t.length/3))?best:null}
+function row(i,n,s){return `<div class="res"><div class="rank">${i+1}</div><div class="info"><b>${n}</b><div class="tags">${tags(n)}</div><div class="meter"><i style="width:${(s*100).toFixed(0)}%"></i></div></div><div class="pct">${(s*100).toFixed(1)}%</div></div>`}
+
+function recommend(t){
+  const m=find(t);
+  if(!m){$("msg").textContent="Sorry, that movie is not in our database. Try one from the list below.";$("out1").innerHTML="";return}
+  $("q").value=m;
+  $("msg").textContent=t.trim().toLowerCase()==m.toLowerCase()?"":`Showing results for "${m}"`;
+  const r=names.filter(n=>n!==m).map(n=>[n,cos(M[m],M[n])]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  $("out1").innerHTML=`<h2>If you liked <span>${m}</span> <small style="color:var(--muted);font-size:14px;font-weight:400">[${tags(m)}]</small></h2><div class="results">${r.map((x,i)=>row(i,x[0],x[1])).join("")}</div>`;
+  $("out1").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+const sel=new Set();
+function byGenre(){
+  if(!sel.size){$("out2").innerHTML='<div class="tags">Select one or more genres above to see picks.</div>';return}
+  const p=G.map(g=>sel.has(g)?1:0);
+  const r=names.map(n=>[n,cos(p,M[n])]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  $("out2").innerHTML=r.map((x,i)=>row(i,x[0],x[1])).join("");
+}
+
+$("titles").innerHTML=names.map(n=>`<option value="${n}">`).join("");
+$("chips").innerHTML=G.map(g=>`<button class="chip" data-g="${g}">${g}</button>`).join("");
+$("chips").onclick=e=>{const g=e.target.dataset.g;if(!g)return;sel.has(g)?sel.delete(g):sel.add(g);e.target.classList.toggle("on");byGenre()};
+const hue=n=>{let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%60;return 130+h};
+$("grid").innerHTML=names.map(n=>`<div class="card" data-n="${n}"><div class="poster" style="background:linear-gradient(135deg,hsl(${hue(n)},70%,22%),#050a07)">${n.split(" ").map(w=>w[0]).join("").slice(0,2)}</div><div class="t"><b>${n}</b><div class="tags">${tags(n)}</div></div></div>`).join("");
+$("grid").onclick=e=>{const c=e.target.closest(".card");if(c)recommend(c.dataset.n)};
+$("go").onclick=()=>recommend($("q").value);
+$("q").onkeydown=e=>{if(e.key==="Enter")recommend($("q").value)};
+byGenre();
+</script>
+</body>
+</html>
