@@ -12,8 +12,7 @@ app = Flask(__name__)
 def home():
     return send_from_directory(".", "index.html")
 
-    return """
-    <h1>🎬 CineMatch AI</h1>
+    
     <p>Your Movie Recommendation API is running!</p>
     <p>Try these links:</p>
     <ul>
