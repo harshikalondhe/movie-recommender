@@ -1,0 +1,22 @@
+cat > .gitignore <<'EOF'
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+
+# Editor and operating system files
+.DS_Store
+.vscode/
+
+# Local development files
+*.log
+EOF

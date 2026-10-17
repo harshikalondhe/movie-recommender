@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CineMatch AI - Movie Recommendation System</title>
 <style>
-:root{
+:root{ 
   color-scheme: dark;
   --bg:#050a07; --surface:#0c1610; --surface2:#122019; --line:#1f3a2b;
   --green:#22c55e; --green-d:#15803d; --text:#ffffff; --muted:#9db3a5;
@@ -110,23 +110,98 @@ function find(t){t=t.trim().toLowerCase();if(!t)return null;
   return bd<=Math.max(2,Math.floor(t.length/3))?best:null}
 function row(i,n,s){return `<div class="res"><div class="rank">${i+1}</div><div class="info"><b>${n}</b><div class="tags">${tags(n)}</div><div class="meter"><i style="width:${(s*100).toFixed(0)}%"></i></div></div><div class="pct">${(s*100).toFixed(1)}%</div></div>`}
 
-function recommend(t){
-  const m=find(t);
-  if(!m){$("msg").textContent="Sorry, that movie is not in our database. Try one from the list below.";$("out1").innerHTML="";return}
-  $("q").value=m;
-  $("msg").textContent=t.trim().toLowerCase()==m.toLowerCase()?"":`Showing results for "${m}"`;
-  const r=names.filter(n=>n!==m).map(n=>[n,cos(M[m],M[n])]).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  $("out1").innerHTML=`<h2>If you liked <span>${m}</span> <small style="color:var(--muted);font-size:14px;font-weight:400">[${tags(m)}]</small></h2><div class="results">${r.map((x,i)=>row(i,x[0],x[1])).join("")}</div>`;
-  $("out1").scrollIntoView({behavior:"smooth",block:"nearest"});
+
+async function recommend(t) {
+  const movie = t.trim();
+
+  if (!movie) {
+    $("msg").textContent = "Please enter a movie name.";
+    return;
+  }
+
+  $("msg").textContent = "Finding recommendations...";
+  $("out1").innerHTML = "";
+
+  try {
+    const response = await fetch(
+      `/api/recommend?movie=${encodeURIComponent(movie)}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      $("msg").textContent =
+        data.error || "Could not find that movie. Try a movie from the list.";
+      return;
+    }
+
+    $("q").value = data.movie;
+    $("msg").textContent = "";
+
+    const results = data.recommendations || [];
+
+    $("out1").innerHTML = `
+      <h2>If you liked <span>${data.movie}</span>
+        <small style="color:var(--muted);font-size:14px;font-weight:400">
+          [${data.genres.join(" · ")}]
+        </small>
+      </h2>
+      <div class="results">
+        ${results.map((item, i) =>
+          row(i, item.title, item.score)
+        ).join("")}
+      </div>
+    `;
+
+    $("out1").scrollIntoView({
+      behavior: "smooth",
+      block: "nearest"
+    });
+  } catch (error) {
+    $("msg").textContent =
+      "Cannot connect to the Python API. Check that Flask is running.";
+    console.error(error);
+  }
 }
 
-const sel=new Set();
-function byGenre(){
-  if(!sel.size){$("out2").innerHTML='<div class="tags">Select one or more genres above to see picks.</div>';return}
-  const p=G.map(g=>sel.has(g)?1:0);
-  const r=names.map(n=>[n,cos(p,M[n])]).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  $("out2").innerHTML=r.map((x,i)=>row(i,x[0],x[1])).join("");
+
+
+async function byGenre() {
+  if (!sel.size) {
+    $("out2").innerHTML =
+      '<div class="tags">Select one or more genres above to see picks.</div>';
+    return;
+  }
+
+  $("out2").innerHTML =
+    '<div class="tags">Finding recommendations...</div>';
+
+  try {
+    const genres = [...sel].join(",");
+
+    const response = await fetch(
+      `/api/genres?genres=${encodeURIComponent(genres)}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      $("out2").innerHTML =
+        `<div class="tags">${data.error || "Unable to find recommendations."}</div>`;
+      return;
+    }
+
+    $("out2").innerHTML = data.recommendations
+      .map((item, i) => row(i, item.title, item.score))
+      .join("");
+  } catch (error) {
+    $("out2").innerHTML =
+      '<div class="tags">Cannot connect to the Python API. Check Flask.</div>';
+    console.error(error);
+  }
 }
+
+
 
 $("titles").innerHTML=names.map(n=>`<option value="${n}">`).join("");
 $("chips").innerHTML=G.map(g=>`<button class="chip" data-g="${g}">${g}</button>`).join("");
